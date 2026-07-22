@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Keuangan & Kas Kelas - 10 RPL</title>
+    <style>
+        /* --- 1. DESAIN DASHBOARD FINANSIAL MODERN (CSS) --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        
+        .ledger-box { background-color: #1e293b; border: 1px solid #334155; padding: 30px; border-radius: 16px; width: 100%; max-width: 600px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
+        h2 { color: #38bdf8; font-size: 20px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+        .sub { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
+        
+        /* Kartu Ringkasan Total Saldo */
+        .saldo-card { background: linear-gradient(135deg, #0284c7, #0369a1); padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 25px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3); }
+        .saldo-title { font-size: 12px; text-transform: uppercase; color: #e0f2fe; letter-spacing: 1px; }
+        .saldo-num { font-size: 32px; font-weight: bold; color: #fff; margin-top: 5px; }
+
+        /* Panel Form Transaksi */
+        .form-panel { background: #0f172a; border: 1px solid #334155; padding: 15px; border-radius: 10px; margin-bottom: 25px; }
+        .input-group { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 10px; margin-bottom: 10px; }
+        
+        input, select { width: 100%; background: #1e293b; border: 1px solid #475569; border-radius: 6px; color: #fff; padding: 10px; font-size: 14px; outline: none; }
+        input:focus { border-color: #38bdf8; }
+        
+        button { width: 100%; background: #22c55e; color: white; border: none; padding: 12px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        button:hover { background: #16a34a; }
+        
+        /* Tabel Riwayat Transaksi Kas */
+        .table-area { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th { background-color: #334155; color: #38bdf8; padding: 10px; font-weight: bold; }
+        td { padding: 12px 10px; border-bottom: 1px solid #334155; }
+        
+        .masuk { color: #22c55e; font-weight: bold; }
+        .keluar { color: #f43f5e; font-weight: bold; }
+        .btn-hapus { color: #f43f5e; cursor: pointer; font-weight: bold; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- --- 2. STRUKTUR HALAMAN UTAMA (HTML) --- -->
+    <div class="ledger-box">
+        <h2>angry girly</h2>
+        <p class="sub">Sistem Manajemen Buku Kas Finansial Lokal - 10 RPL</p>
+
+        <!-- KARTU INDIKATOR SALDO UTAMA -->
+        <div class="saldo-card">
+            <div class="saldo-title">Total Saldo Kas Terkini</div>
+            <div class="saldo-num" id="totalSaldoDisplay">Rp 0</div>
+        </div>
+
+        <!-- FORM INPUT TRANSAKSI BARU -->
+        <div class="form-panel">
+            <div class="input-group">
+                <input type="text" id="namaSiswa" placeholder="Nama Siswa / Keterangan">
+                <select id="jenisTransaksi">
+                    <option value="masuk">Uang Masuk</option>
+                    <option value="keluar">Uang Keluar</option>
+                </select>
+                <input type="number" id="nominalUang" placeholder="Nominal (Rp)">
+            </div>
+            <button onclick="catatTransaksiBaru()">Catat & Update Pembukuan</button>
+        </div>
+
+        <!-- TABEL REKOR TRANSAKSI -->
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 10px; color: #cbd5e1;">RIWAYAT TRANSAKSI TERAKHIR:</div>
+        <div class="table-area">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Siswa / Keterangan</th>
+                        <th>Tipe</th>
+                        <th>Nominal</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelTransaksiBody">
+                    <!-- Data transaksi disuntikkan secara dinamis ke sini -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- --- 3. LOGIKA OPERASI CRUD DATA FINANSIAL (JAVASCRIPT) --- -->
+    <script>
+        // FUNGSI UTAMA: MENYIMPAN TRANSAKSI BARU KE DALAM LOCALSTORAGE
+        function catatTransaksiBaru() {
+            const nama = document.getElementById("namaSiswa").value.trim();
+            const jenis = document.getElementById("jenisTransaksi").value;
+            const nominal = parseInt(document.getElementById("nominalUang").value);
+
+            // Validasi Input Data
+            if (nama === "" || isNaN(nominal) || nominal <= 0) {
+                alert("Harap masukkan nama keterangan dan nominal uang yang valid!");
+                return;
+            }
+
+            // Buat struktur objek cetakan rekor data keuangan
+            const dataTransaksi = {
+                id: Date.now(), // ID unik berbasis milidetik waktu waktu saat ini
+                keterangan: nama,
+                tipe: jenis,
+                jumlah: nominal
+            };
+
+            // Ambil database kas lama, gabungkan dengan rekor transaksi baru
+            let databaseKas = JSON.parse(localStorage.getItem("classLedgerDB")) || [];
+            databaseKas.push(dataTransaksi);
+
+            // Tanam kembali array data ke memori permanen browser
+            localStorage.setItem("classLedgerDB", JSON.stringify(databaseKas));
+
+            // Bersihkan kotak input form pasca pencatatan sukses
+            document.getElementById("namaSiswa").value = "";
+            document.getElementById("nominalUang").value = "";
+
+            prosesHitungDanMuatUlang();
+        }
+
+        // FUNGSI KALKULASI TOTAL MATEMATIKA SALDO & MERENDER TABEL
+        function prosesHitungDanMuatUlang() {
+            const tbody = document.getElementById("tabelTransaksiBody");
+            tbody.innerHTML = "";
+
+            let databaseKas = JSON.parse(localStorage.getItem("classLedgerDB")) || [];
+            let akumulasiSaldo = 0;
+
+            if (databaseKas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#64748b;">Belum ada riwayat transaksi kas kelas.</td></tr>`;
+                document.getElementById("totalSaldoDisplay").innerText = "Rp 0";
+                return;
+            }
+
+            // Loop Logika Kelas 10: Membaca riwayat data sekaligus menghitung total uang kas
+            databaseKas.forEach(item => {
+                const baris = document.createElement("tr");
+
+                // If-Else Percabangan: Jika uang masuk menambah saldo, jika uang keluar mengurangi saldo
+                let simbolTipe = "";
+                let classWarna = "";
+                if (item.tipe === "masuk") {
+                    akumulasiSaldo += item.jumlah;
+                    simbolTipe = "Masuk";
+                    classWarna = "masuk";
+                } else {
+                    akumulasiSaldo -= item.jumlah;
+                    simbolTipe = "Keluar";
+                    classWarna = "keluar";
+                }
+
+                // Render baris tabel HTML
+                baris.innerHTML = `
+                    <td><strong>${item.keterangan}</strong></td>
+                    <td class="${classWarna}">${simbolTipe}</td>
+                    <td class="${classWarna}">Rp ${item.jumlah.toLocaleString('id-ID')}</td>
+                    <td><span class="btn-hapus" onclick="hapusTransaksi(${item.id})">Hapus</span></td>
+                `;
+                tbody.appendChild(baris);
+            });
+
+            // Update papan total saldo akhir (Menerapkan format mata uang Rupiah)
+            document.getElementById("totalSaldoDisplay").innerText = "Rp " + akumulasiSaldo.toLocaleString('id-ID');
+        }
+
+        // FUNGSI MENGHAPUS DATA (DELETE) BERBASIS FILTERING ARRAY
+        function hapusTransaksi(idTarget) {
+            if (confirm("Apakah Anda yakin ingin menghapus rekor catatan kas ini?")) {
+                let databaseKas = JSON.parse(localStorage.getItem("classLedgerDB")) || [];
+                
+                // Logika Filter: Menyaring dan menyisakan data yang ID-nya tidak cocok dengan ID target hapus
+                databaseKas = databaseKas.filter(item => item.id !== idTarget);
+                
+                localStorage.setItem("classLedgerDB", JSON.stringify(databaseKas));
+                prosesHitungDanMuatUlang();
+            }
+        }
+
+        // Jalankan render otomatis saat aplikasi dibuka pertama kali
+        prosesHitungDanMuatUlang();
+    </script>
+</body>
+</html>
